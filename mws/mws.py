@@ -254,6 +254,25 @@ class MWS(object):
             for num, value in enumerate(values):
                 params['%s%d' % (param, (num + 1))] = value
         return params
+        
+    def enumerate_param_additional(self, param, values, partype):
+        """
+            Builds a dictionary of an enumerated parameter - updated for GetMyFeesEstimate.
+            Takes any iterable and returns a dictionary.
+            ie.
+            enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', '123', 'MarketplaceId')
+            returns
+            {
+                FeesEstimateRequestList.FeesEstimateRequest.1.MarketplaceId: 123
+            }
+        """
+        params = {}
+        if values is not None:
+            if not param.endswith('.'):
+                param = "%s." % param
+            for num, value in enumerate(values):
+                params['%(x)s%(y)d.%(z)s' % {"x" : param, "y" : (num + 1), "z" : partype}] = value
+        return params
 
 
 class Feeds(MWS):
@@ -551,6 +570,25 @@ class Products(MWS):
                     ItemCondition=condition)
         data.update(self.enumerate_param('ASINList.ASIN.', asins))
         return self.make_request(data)
+        
+    def get_my_fees_estimate(self, marketplaceid, idtype, idvalue, isamazonfulfilled, identifier, listingprice, shippingcost, currency="USD", shipcurrency="USD", points='0', pointsvalue='0', pointscurrency='USD'):
+        data = dict(Action='GetMyFeesEstimate')
+
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', marketplaceid, 'MarketplaceId'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', idtype, 'IdType'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', idvalue, 'IdValue'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', isamazonfulfilled, 'IsAmazonFulfilled'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', identifier, 'Identifier'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', listingprice, 'PriceToEstimateFees.ListingPrice.Amount'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', currency, 'PriceToEstimateFees.ListingPrice.CurrencyCode'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', shippingcost, 'PriceToEstimateFees.Shipping.Amount'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', shipcurrency, 'PriceToEstimateFees.Shipping.CurrencyCode'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', points, 'PriceToEstimateFees.Points.PointsNumber'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', pointsvalue, 'PriceToEstimateFees.Points.PointsMonetaryValue.Amount'))
+	data.update(self.enumerate_param_additional('FeesEstimateRequestList.FeesEstimateRequest.', pointscurrency, 'PriceToEstimateFees.Points.PointsMonetaryValue.CurrencyCode'))
+
+        return self.make_request(data)
+
 
 
 class Sellers(MWS):
